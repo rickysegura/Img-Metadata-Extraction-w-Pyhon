@@ -1,0 +1,104 @@
+stages:
+  - test
+  - lint
+  - build
+  - release
+
+before_script:
+  - pip install tox
+
+py37:
+  stage: test
+  image: python:3.7
+  coverage: '/TOTAL\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)%/'
+  script:
+    - tox -vv -e py37
+  artifacts:
+    paths:
+      - .tox/py37/tmp
+    when: always
+
+py38:
+  stage: test
+  image: python:3.8
+  coverage: '/TOTAL\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)%/'
+  script:
+    - tox -vv -e py38
+  artifacts:
+    paths:
+      - .tox/py38/tmp
+    when: always
+
+py39:
+  stage: test
+  image: python:3.9
+  coverage: '/TOTAL\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)%/'
+  script:
+    - tox -vv -e py39
+  artifacts:
+    paths:
+      - .tox/py39/tmp
+    when: always
+
+py310:
+  stage: test
+  image: python:3.10
+  script:
+    - tox -vv -e py310
+  artifacts:
+    paths:
+      - .tox/py310/tmp
+    when: always
+
+black:
+  stage: lint
+  image: python:3.9
+  script:
+    - tox -vv -e black
+
+mypy:
+  stage: lint
+  image: python:3.9
+  script:
+    - tox -vv -e mypy
+
+pylint:
+  stage: lint
+  image: python:3.9
+  script:
+    - tox -vv -e pylint
+
+docs:
+  stage: build
+  image: python:3.9
+  script:
+    - tox -vv -e docs
+  artifacts:
+    paths:
+      - .tox/docs/tmp
+    when: always
+
+packages:
+  stage: build
+  image: python:3.9
+  script:
+    - pip install setuptools wheel
+    - python setup.py sdist bdist_wheel
+  artifacts:
+    paths:
+      - dist
+    when: always
+
+pypi:
+  stage: release
+  image: python:3.9
+  variables:
+    TWINE_USERNAME: $PYPI_USERNAME
+    TWINE_PASSWORD: $PYPI_PASSWORD
+  dependencies:
+    - packages
+  script:
+    - pip install twine
+    - twine upload dist/*
+  only:
+    - master

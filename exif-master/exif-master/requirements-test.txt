@@ -1,0 +1,4 @@
+baseline
+pytest
+pytest-cov
+pytest-html
